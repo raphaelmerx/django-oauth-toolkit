@@ -221,6 +221,23 @@ class TokenView(OAuthLibMixin, View):
     oauthlib_backend_class = oauth2_settings.OAUTH2_BACKEND_CLASS
 
     @method_decorator(sensitive_post_parameters("password"))
+    def get(self, request, *args, **kwargs):
+        url, headers, body, status = self.create_token_response(request)
+        if status == 200:
+            access_token = json.loads(body).get("access_token")
+            if access_token is not None:
+                token = get_access_token_model().objects.get(
+                    token=access_token)
+                app_authorized.send(
+                    sender=self, request=request,
+                    token=token)
+        response = HttpResponse(content=body, status=status)
+
+        for k, v in headers.items():
+            response[k] = v
+        return response
+
+    @method_decorator(sensitive_post_parameters("password"))
     def post(self, request, *args, **kwargs):
         url, headers, body, status = self.create_token_response(request)
         if status == 200:
