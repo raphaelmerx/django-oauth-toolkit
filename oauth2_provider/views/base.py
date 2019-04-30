@@ -222,6 +222,7 @@ class TokenView(OAuthLibMixin, View):
 
     @method_decorator(sensitive_post_parameters("password"))
     def get(self, request, *args, **kwargs):
+        log.warning(request)
         url, headers, body, status = self.create_token_response(request)
         if status == 200:
             access_token = json.loads(body).get("access_token")
@@ -232,6 +233,7 @@ class TokenView(OAuthLibMixin, View):
                     sender=self, request=request,
                     token=token)
         response = HttpResponse(content=body, status=status)
+        log.warning(status, body)
 
         for k, v in headers.items():
             response[k] = v
